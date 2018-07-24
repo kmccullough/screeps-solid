@@ -1,19 +1,6 @@
 export type StateName = string;
 export type TransitionName = string;
 
-export interface StateConstructor {
-  state: string;
-  new (): State;
-}
-
-export abstract class State {
-  state: string;
-  constructor() {
-    this.state = (this.constructor as StateConstructor).state;
-  }
-  abstract execute(stateMachine: StateMachine): void;
-}
-
 export interface StateMachineTransitionConfig {
   name: TransitionName;
   from?: StateName;
