@@ -1,31 +1,32 @@
-export type StateName = string;
-export type TransitionName = string;
+import { DependencyManager } from '@src/dependency-manager';
+import { StateFactory } from '@src/state/state-factory';
 
-export interface StateMachineTransitionConfig {
-  name: TransitionName;
-  from?: StateName;
-  to: StateName;
-}
-
-export interface StateMachineConfig {
-  init: string;
-  transitions: StateMachineTransitionConfig[];
+export interface Transition<TransitionType = string, StateType = string> {
+  name: string;
+  from?: string;
+  to: string;
 }
 
 export class StateMachine {
 
-  // Current state
-  state: string;
-
   // Dynamic transition methods
   [key: string]: any;
 
-  constructor(config: StateMachineConfig) {
-    this.registerTransition(...config.transitions);
-    this.enter(this.state = config.init);
+  constructor(
+    public state: string,
+    transitions: Transition[],
+    states?: DependencyManager<StateFactory>
+  ) {
+    this.registerTransition(...transitions);
+    this.transitionTo(state, true);
   }
 
-  registerTransition(...transitions: StateMachineTransitionConfig[]) {
+  /**
+   * Register a transition from some state to another
+   * @param {Transition} transitions Any number of new transitions
+   * @returns {this}
+   */
+  registerTransition(...transitions: Transition[]): this {
     transitions.forEach(transition => {
       // Create transition method
       this[transition.name] = this[transition.name]
@@ -39,23 +40,47 @@ export class StateMachine {
       t.from = t.from || {};
       // Set transition destination for given sources
       _.castArray(transition.from)
-        .forEach((from: StateName) => {
+        .forEach((from: string) => {
           t.from[from || 'any'] = transition.to;
         });
     });
+    return this;
   }
 
-  transition(name: TransitionName) {
-    const transition = this.transitions[name || 'any'];
-    const to = transition.from[this.state]
-      || transition.from.any;
-    if (to) {
-      this.enter(to);
+  /**
+   * Gives expected state if given transition is executed on current state
+   * @param {string} transition Transition to translate
+   * @param {string|null} [currentState] Optional explicit current state
+   * @returns {string} State expected after transition
+   */
+  stateFromTransition(transition: string, currentState?: string): string | null {
+    const t = this.transitions[transition || 'any'];
+    const expectedState = t.from[currentState || this.state] || t.from.any;
+    return expectedState || null;
+  }
+
+  /**
+   * Execute transition of given name
+   * @param {string} name Name of transition to execute
+   * @returns {this}
+   */
+  transition(name: string): this {
+    const state = this.stateFromTransition(name);
+    if (state) {
+      this.transitionTo(state);
     }
+    return this;
   }
 
-  enter(state: StateName) {
+  /**
+   * Transition to the given state name
+   * @param {string} state
+   * @param {boolean} forceTransition
+   * @returns {this}
+   */
+  transitionTo(state: string, forceTransition: boolean = false): this {
     this.state = state;
+    return this;
   }
 
 }

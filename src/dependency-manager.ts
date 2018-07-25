@@ -1,0 +1,3 @@
+export class DependencyManager<Dependecy> {
+
+}

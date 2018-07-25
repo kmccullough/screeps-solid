@@ -25,10 +25,10 @@ export const loop = ErrorMapper.wrapLoop(() => {
       return;
     }
 
-    const stateMachine = new StateMachine({
-      init: creep.memory.state || defaultCreepState,
-      transitions: creepStateTransitions
-    });
+    const stateMachine = new StateMachine(
+      creep.memory.state || defaultCreepState,
+      creepStateTransitions
+    );
 
     const stateName = creep.memory.state = stateMachine.state;
     const StateClass = CreepStates[stateName];
