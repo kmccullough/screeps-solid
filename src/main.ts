@@ -5,38 +5,56 @@ import { ErrorMapper } from 'utils/ErrorMapper';
 
 import 'mixins/lodash';
 
-import { StateMachine } from 'state/state-machine';
+import { CreepState } from '@src/state/creep/creep-state';
 import { creepStateTransitions, defaultCreepState } from './config/config';
-import { CreepStates } from './state/creep/creep-states';
+import { creepStates } from './state/creep/creep-states';
+
+import { DependencyManager } from '@src/dependency-manager';
+import { CreepFacade } from '@src/facade/creep/creep';
+import { SpawnerFacade } from '@src/facade/spawner';
+import { StateMachine } from 'state/state-machine';
 
 export const loop = ErrorMapper.wrapLoop(() => {
   console.log(`Current game tick is ${Game.time}`);
 
-  const spawners = findSpawners();
+  const spawners = SpawnerFacade.findSpawners();
   // Just constantly create creeps at all spawners
   spawners.forEach(spawner => {
-    createCreep(spawner, [WORK, MOVE, CARRY]);
+    new SpawnerFacade(spawner)
+      .createCreep([WORK, MOVE, CARRY]);
   });
 
-  const creeps = findCreeps();
+  const creeps = CreepFacade.findCreeps();
   creeps.forEach(creep => {
     // Nothing to do while spawning
     if (creep.spawning) {
       return;
     }
 
-    const stateMachine = new StateMachine(
-      creep.memory.state || defaultCreepState,
-      creepStateTransitions
+    // Collection of CreepState implementations
+    const dm = new DependencyManager<CreepState>(
+      StateClass => new StateClass(creep),
+      creepStates
     );
 
-    const stateName = creep.memory.state = stateMachine.state;
-    const StateClass = CreepStates[stateName];
-    const state = new StateClass(creep);
-    state.execute(stateMachine);
-    console.log(stateMachine.state);
+    const stateMachine = new StateMachine(
+      // Current state or undefined
+      creep.memory.state,
+      // Transition to state mappings
+      creepStateTransitions,
+      // State implementations
+      dm
+    );
+    // Enter initial state, if needed
+    if (!creep.memory.state) {
+      stateMachine.transitionTo(
+        defaultCreepState
+      );
+    }
+    // Execute one state at a time
+    stateMachine.execute();
 
-    creep.memory.state = stateMachine.state;
+    console.log(stateMachine.state);
   });
 
   // Automatically delete memory of missing creeps
@@ -46,59 +64,3 @@ export const loop = ErrorMapper.wrapLoop(() => {
     }
   }
 });
-
-function createCreep(spawner: StructureSpawn, body: BodyPartConstant[]): void {
-  let attemptSpawn = !spawner.spawning;
-  let nameSuffix = null;
-  while (attemptSpawn) {
-    attemptSpawn = false;
-    const result = spawner.spawnCreep(
-      body,
-      Game.time.toString() + (nameSuffix ? '.' + nameSuffix : '')
-    );
-    switch (result) {
-      case OK:
-        console.log('The spawning operation has been scheduled successfully.');
-        break;
-      case ERR_NAME_EXISTS:
-        console.log('There is a creep with the same name already.');
-        attemptSpawn = true;
-        nameSuffix = nameSuffix ? nameSuffix + 1 : 2;
-        break;
-      case ERR_BUSY:
-        console.log('The spawn is already in process of spawning another creep.');
-        break;
-      case ERR_NOT_ENOUGH_ENERGY:
-        //console.log('The spawn and its extensions contain not enough energy to create a creep with the given body.');
-        break;
-      case ERR_INVALID_ARGS:
-        console.log('Body is not properly described or name was not provided.');
-        break;
-      case ERR_RCL_NOT_ENOUGH:
-        console.log('Your Room Controller level is insufficient to use this spawn.');
-        break;
-      default:
-        console.log('Spawners said "Something bad happened."');
-    }
-  }
-}
-
-function findCreeps(): Creep[] {
-  const creeps: Creep[] = [];
-  Object.keys(Game.creeps).forEach(creepName => {
-    creeps.push(Game.creeps[creepName]);
-  });
-  return creeps;
-}
-
-function findSpawners(): StructureSpawn[] {
-  const spawners: StructureSpawn[] = [];
-  Object.keys(Game.rooms).forEach(roomName => {
-    const room = Game.rooms[roomName];
-    const roomSpawners = room.find<StructureSpawn>(FIND_MY_STRUCTURES, {
-      filter: { structureType: STRUCTURE_SPAWN }
-    });
-    spawners.push(...roomSpawners);
-  });
-  return spawners;
-}

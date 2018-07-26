@@ -13,7 +13,7 @@ export interface CreepStatesHash {
   [key: string]: CreepStateConstructor;
 }
 
-export const CreepStates: CreepStatesHash = {
+export const creepStates: CreepStatesHash = {
   harvesting: Harvesting,
   hauling:    Hauling,
   idle:       Idle,

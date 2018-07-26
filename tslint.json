@@ -4,14 +4,15 @@
   ],
   "rules": {
     "arrow-parens": [true, "ban-single-arg-parens"],
-    "comment-format": [false],
+    "comment-format": false,
     "forin": false,
     "interface-name": [true, "never-prefix"],
-    "member-access": [false],
-    "member-ordering": [false],
-    "no-console": [false],
+    "member-access": false,
+    "member-ordering": false,
+    "no-console": false,
+    "no-empty": false,
     "no-namespace": [true, "allow-declarations"],
-    "no-string-literal": [false],
+    "no-string-literal": false,
     "quotemark": [true, "single", "avoid-escape"],
     "trailing-comma": [true, {
       "multiline": {

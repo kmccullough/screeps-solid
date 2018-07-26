@@ -1,5 +1,5 @@
 import { DependencyManager } from '@src/dependency-manager';
-import { StateFactory } from '@src/state/state-factory';
+import { State } from '@src/state/state';
 
 export interface Transition<TransitionType = string, StateType = string> {
   name: string;
@@ -7,18 +7,32 @@ export interface Transition<TransitionType = string, StateType = string> {
   to: string;
 }
 
-export class StateMachine {
+export type StateName = string | null | undefined;
+
+export const StateUndefined = 'undefined';
+
+export class StateMachine<StateType extends State> {
+
+  public state: string;
+  private transitions: { [key: string]: { name: string, from: { [key: string]: string } } } = {};
 
   // Dynamic transition methods
-  [key: string]: any;
+  [key: string]: (() => void) | any;
 
+  /**
+   * Instantiate StateMachine
+   * @param {string} [state] Initial state name
+   * @param {Transition[]} transitions Mappings of transition to/from states
+   * @param {DependencyManager<State>} [states] State factories for
+   * transition enter/exit actions and state execute action
+   */
   constructor(
-    public state: string,
+    state: StateName,
     transitions: Transition[],
-    states?: DependencyManager<StateFactory>
+    public states?: DependencyManager<StateType>
   ) {
+    this.state = state || StateUndefined;
     this.registerTransition(...transitions);
-    this.transitionTo(state, true);
   }
 
   /**
@@ -32,7 +46,6 @@ export class StateMachine {
       this[transition.name] = this[transition.name]
         || (() => this.transition(transition.name));
       // Get stored transitions for transition name
-      this.transitions = this.transitions || {};
       const t = this.transitions[transition.name]
         = this.transitions[transition.name]
         || { name: transition.name };
@@ -79,7 +92,47 @@ export class StateMachine {
    * @returns {this}
    */
   transitionTo(state: string, forceTransition: boolean = false): this {
-    this.state = state;
+    if (this.state !== state || forceTransition) {
+      if (this.states) {
+        const stateInstance = this.states.get(this.state);
+        if (stateInstance) {
+          stateInstance.exit(this as any);
+        }
+      }
+      this.state = state;
+      if (this.states) {
+        const stateInstance = this.states.get(this.state);
+        if (stateInstance) {
+          stateInstance.enter(this as any);
+        }
+      }
+    }
+    return this;
+  }
+
+  /**
+   * Execute current state, if DependencyManager present
+   * @returns {this}
+   */
+  execute(): this {
+    if (this.states) {
+      const stateInstance = this.states.get(this.state);
+      if (stateInstance) {
+        stateInstance.execute(this as any);
+      }
+    }
+    return this;
+  }
+
+  /**
+   * Execute states while predicate returns truthy, if DependencyManager present
+   * @param {(sm: this) => boolean} predicate Returns falsey to stop execution
+   * @returns {this}
+   */
+  executeWhile(predicate: (sm: this) => boolean): this {
+    while (predicate(this)) {
+      this.execute();
+    }
     return this;
   }
 

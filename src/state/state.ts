@@ -7,12 +7,34 @@ export interface StateConstructor {
 }
 
 export abstract class State {
+
   // Instance copy of state name
   state: string;
+
   constructor() {
     // Copy static property to instance
     this.state = (this.constructor as StateConstructor).state;
   }
-  // Execute derived state
-  abstract execute(stateMachine: StateMachine): void;
+
+  /**
+   * Enter state
+   * Make sure to call super.enter(stateMachine)
+   * @param {StateMachine<State>} stateMachine
+   */
+  enter(stateMachine: StateMachine<State>): void {}
+
+  /**
+   * Execute state
+   * Make sure to call super.execute(stateMachine)
+   * @param {StateMachine<State>} stateMachine
+   */
+  execute(stateMachine: StateMachine<State>): void {}
+
+  /**
+   * Exit state
+   * Make sure to call super.exit(stateMachine)
+   * @param {StateMachine<State>} stateMachine
+   */
+  exit(stateMachine: StateMachine<State>): void {}
+
 }
