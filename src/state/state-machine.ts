@@ -96,14 +96,14 @@ export class StateMachine<StateType extends State> {
       if (this.states) {
         const stateInstance = this.states.get(this.state);
         if (stateInstance) {
-          stateInstance.exit(this as any);
+          stateInstance.exit(this);
         }
       }
       this.state = state;
       if (this.states) {
         const stateInstance = this.states.get(this.state);
         if (stateInstance) {
-          stateInstance.enter(this as any);
+          stateInstance.enter(this);
         }
       }
     }
@@ -118,7 +118,7 @@ export class StateMachine<StateType extends State> {
     if (this.states) {
       const stateInstance = this.states.get(this.state);
       if (stateInstance) {
-        stateInstance.execute(this as any);
+        stateInstance.execute(this);
       }
     }
     return this;

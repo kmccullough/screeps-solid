@@ -7,35 +7,30 @@ export class Harvesting extends CreepState {
 
   static get state() { return 'harvesting'; }
 
-  harvester: HarvesterFacade;
-
-  constructor(creep: Creep) {
-    super(creep);
-    this.harvester = new HarvesterFacade(creep);
-  }
-
   /**
    * Execute state
    * Make sure to call super.execute(stateMachine)
    * @param {StateMachine<State>} stateMachine
    */
-  execute(stateMachine: StateMachine<State>): void {
+  execute<T extends State>(stateMachine: StateMachine<T>): void {
 
     super.execute(stateMachine);
 
-    if (this.harvester.isEnergyFull()) {
+    const creep = new HarvesterFacade(this.creep);
+
+    if (creep.isEnergyFull()) {
       return stateMachine.idle();
     }
 
-    const source = this.harvester.findSource();
+    const source = creep.findSource();
     if (!source) {
       return stateMachine.next();
     }
 
-    if (this.harvester.isAdjacentTo(source)) {
-      this.harvester.harvestSource(source);
+    if (creep.isAdjacentTo(source)) {
+      creep.harvestSource(source);
     } else {
-      this.harvester.moveTo(source);
+      creep.moveTo(source);
     }
 
   }

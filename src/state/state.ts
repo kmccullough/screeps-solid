@@ -21,20 +21,20 @@ export abstract class State {
    * Make sure to call super.enter(stateMachine)
    * @param {StateMachine<State>} stateMachine
    */
-  enter(stateMachine: StateMachine<State>): void {}
+  enter<T extends State>(stateMachine: StateMachine<T>): void {}
 
   /**
    * Execute state
    * Make sure to call super.execute(stateMachine)
    * @param {StateMachine<State>} stateMachine
    */
-  execute(stateMachine: StateMachine<State>): void {}
+  execute<T extends State>(stateMachine: StateMachine<T>): void {}
 
   /**
    * Exit state
    * Make sure to call super.exit(stateMachine)
    * @param {StateMachine<State>} stateMachine
    */
-  exit(stateMachine: StateMachine<State>): void {}
+  exit<T extends State>(stateMachine: StateMachine<T>): void {}
 
 }

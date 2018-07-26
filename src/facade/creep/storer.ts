@@ -13,6 +13,7 @@ export class StorerFacade extends CreepFacade {
     switch (result) {
       case OK:
         //console.log('The transfer operation has been scheduled successfully.');
+        this.setBusy(true);
         break;
       case ERR_INVALID_TARGET:
         console.log('The target is not a valid object which can contain the specified resource.');

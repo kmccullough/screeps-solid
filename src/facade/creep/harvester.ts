@@ -11,6 +11,7 @@ export class HarvesterFacade extends CreepFacade {
     switch (result) {
       case OK:
         //console.log('The harvesting operation has been scheduled successfully.');
+        this.setBusy(true);
         break;
       case ERR_NOT_ENOUGH_RESOURCES:
         console.log('The target source does not contain any harvestable energy.');

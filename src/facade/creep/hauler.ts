@@ -13,6 +13,7 @@ export class HaulerFacade extends CreepFacade {
     switch (result) {
       case OK:
         //console.log('The pickup operation has been scheduled successfully.');
+        this.setBusy(true);
         break;
       case ERR_INVALID_TARGET:
         console.log('The target is not a valid object to pick up.');

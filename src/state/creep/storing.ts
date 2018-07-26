@@ -7,31 +7,26 @@ export class Storing extends CreepState {
 
   static get state() { return 'storing'; }
 
-  storer: StorerFacade;
-
-  constructor(creep: Creep) {
-    super(creep);
-    this.storer = new StorerFacade(creep);
-  }
-
-  execute(stateMachine: StateMachine<State>): void {
+  execute<T extends State>(stateMachine: StateMachine<T>): void {
 
     super.execute(stateMachine);
 
-    if (this.storer.isEnergyEmpty()) {
+    const creep = new StorerFacade(this.creep);
+
+    if (creep.isEnergyEmpty()) {
       return stateMachine.idle();
     }
 
-    const spawner = this.storer.findSpawner();
+    const spawner = creep.findSpawner();
     if (!spawner) {
       console.log('no spawner?');
       return stateMachine.next();
     }
 
-    if (this.storer.isAdjacentTo(spawner)) {
-      this.storer.transferTo(spawner);
+    if (creep.isAdjacentTo(spawner)) {
+      creep.transferTo(spawner);
     } else {
-      this.storer.moveTo(spawner);
+      creep.moveTo(spawner);
     }
 
   }

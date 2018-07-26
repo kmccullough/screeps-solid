@@ -7,18 +7,13 @@ export class Idle extends CreepState {
 
   static get state() { return 'idle'; }
 
-  idler: IdlerFacade;
-
-  constructor(creep: Creep) {
-    super(creep);
-    this.idler = new IdlerFacade(creep);
-  }
-
-  execute(stateMachine: StateMachine<State>): void {
+  execute<T extends State>(stateMachine: StateMachine<T>): void {
 
     super.execute(stateMachine);
 
-    if (this.idler.isEnergyFull()) {
+    const creep = new IdlerFacade(this.creep);
+
+    if (creep.isEnergyFull()) {
       return stateMachine.store();
     }
 
@@ -26,8 +21,4 @@ export class Idle extends CreepState {
 
   }
 
-}
-
-function isCreepEnergyFull(creep: Creep) {
-  return creep.carry[RESOURCE_ENERGY] === creep.carryCapacity;
 }

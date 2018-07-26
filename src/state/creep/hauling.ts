@@ -7,30 +7,25 @@ export class Hauling extends CreepState {
 
   static get state() { return 'hauling'; }
 
-  hauler: HaulerFacade;
-
-  constructor(creep: Creep) {
-    super(creep);
-    this.hauler = new HaulerFacade(creep);
-  }
-
-  execute(stateMachine: StateMachine<State>): void {
+  execute<T extends State>(stateMachine: StateMachine<T>): void {
 
     super.execute(stateMachine);
 
-    if (this.hauler.isEnergyFull()) {
+    const creep = new HaulerFacade(this.creep);
+
+    if (creep.isEnergyFull()) {
       return stateMachine.idle();
     }
 
-    const energy = this.hauler.findEnergy();
+    const energy = creep.findEnergy();
     if (!energy) {
       return stateMachine.next();
     }
 
-    if (this.hauler.isAdjacentTo(energy.pos)) {
-      this.hauler.pickUp(energy);
+    if (creep.isAdjacentTo(energy.pos)) {
+      creep.pickUp(energy);
     } else {
-      this.hauler.moveTo(energy);
+      creep.moveTo(energy);
     }
 
   }

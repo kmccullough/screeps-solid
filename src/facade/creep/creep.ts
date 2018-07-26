@@ -36,6 +36,7 @@ export class CreepFacade {
     switch (result) {
       case OK:
         //console.log('The movement operation has been scheduled successfully.');
+        this.setBusy(true);
         break;
       case ERR_NO_PATH:
         console.log('No path to the target could be found.');
@@ -61,6 +62,15 @@ export class CreepFacade {
 
   setState(state: string): this {
     this.creep.memory.state = state;
+    return this;
+  }
+
+  isBusy(): boolean {
+    return !!this.creep.memory.isBusy;
+  }
+
+  setBusy(isBusy: boolean): this {
+    this.creep.memory.isBusy = isBusy;
     return this;
   }
 }

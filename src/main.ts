@@ -12,6 +12,7 @@ import { creepStates } from './state/creep/creep-states';
 import { DependencyManager } from '@src/dependency-manager';
 import { CreepFacade } from '@src/facade/creep/creep';
 import { SpawnerFacade } from '@src/facade/spawner';
+import { StateStabilizer } from '@src/state/state-stabilizer';
 import { StateMachine } from 'state/state-machine';
 
 export const loop = ErrorMapper.wrapLoop(() => {
@@ -35,7 +36,7 @@ export const loop = ErrorMapper.wrapLoop(() => {
 
     // Collection of CreepState implementations
     const states = new DependencyManager<CreepState>(
-      StateClass => new StateClass(creep),
+      StateClass => new StateClass(creepObject),
       creepStates
     );
 
@@ -53,10 +54,26 @@ export const loop = ErrorMapper.wrapLoop(() => {
         defaultCreepState
       );
     }
-    // Execute one state at a time
-    stateMachine.execute();
 
-    console.log(stateMachine.state);
+    creep.setBusy(false);
+
+    const startState = stateMachine.state;
+    let firstRun = true;
+    const stateStabilizer = new StateStabilizer(stateMachine);
+    stateStabilizer
+      .continueWhile(() => {
+        const looped = !firstRun
+          && stateMachine.state === startState;
+        firstRun = false;
+        return !creep.isBusy() && !looped;
+      })
+      .onStabilize(() => {
+        if (stateMachine.state !== startState) {
+          console.log(stateMachine.state);
+        }
+      })
+      .execute();
+
   });
 
   // Automatically delete memory of missing creeps

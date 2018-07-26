@@ -19,7 +19,7 @@ export abstract class CreepState extends State {
    * Make sure to call super.execute(stateMachine)
    * @param {StateMachine<State>} stateMachine
    */
-  enter(stateMachine: StateMachine<State>): void {
+  enter<T extends State>(stateMachine: StateMachine<T>): void {
     super.execute(stateMachine);
     // Store creep current state in creep memory
     this.creep.memory.state = stateMachine.state;
