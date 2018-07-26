@@ -25,28 +25,30 @@ export const loop = ErrorMapper.wrapLoop(() => {
   });
 
   const creeps = CreepFacade.findCreeps();
-  creeps.forEach(creep => {
+  creeps.forEach(creepObject => {
+    const creep = new CreepFacade(creepObject);
+
     // Nothing to do while spawning
-    if (creep.spawning) {
+    if (creep.isSpawning()) {
       return;
     }
 
     // Collection of CreepState implementations
-    const dm = new DependencyManager<CreepState>(
+    const states = new DependencyManager<CreepState>(
       StateClass => new StateClass(creep),
       creepStates
     );
 
     const stateMachine = new StateMachine(
       // Current state or undefined
-      creep.memory.state,
+      creep.getState(),
       // Transition to state mappings
       creepStateTransitions,
       // State implementations
-      dm
+      states
     );
     // Enter initial state, if needed
-    if (!creep.memory.state) {
+    if (!creep.getState()) {
       stateMachine.transitionTo(
         defaultCreepState
       );

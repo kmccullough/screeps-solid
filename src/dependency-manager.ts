@@ -27,9 +27,9 @@ export class DependencyManager<Dependency, DependencyConstructor = any> {
     return this;
   }
 
-  get(name: string): Dependency {
+  get(name: string): Dependency | undefined {
     let dependency = this.dependencies[name];
-    if (this.factory) {
+    if (dependency && this.factory) {
       let instance = this.instances[name];
       if (!instance) {
         instance = this.instances[name]

@@ -2,17 +2,21 @@ import { RoomFacade, RoomPositionObject } from '@src/facade/room';
 
 export class CreepFacade {
 
-  constructor(
-    public creep: Creep
-  ) {
-  }
-
   static findCreeps(): Creep[] {
     const creeps: Creep[] = [];
     Object.keys(Game.creeps).forEach(creepName => {
       creeps.push(Game.creeps[creepName]);
     });
     return creeps;
+  }
+
+  constructor(
+    public creep: Creep
+  ) {
+  }
+
+  isSpawning() {
+    return this.creep.spawning;
   }
 
   isEnergyEmpty() {
@@ -49,5 +53,14 @@ export class CreepFacade {
       default:
         console.log('Creep said "Something bad happened."');
     }
+  }
+
+  getState(): string | undefined {
+    return this.creep.memory.state;
+  }
+
+  setState(state: string): this {
+    this.creep.memory.state = state;
+    return this;
   }
 }

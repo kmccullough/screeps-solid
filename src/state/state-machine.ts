@@ -130,8 +130,12 @@ export class StateMachine<StateType extends State> {
    * @returns {this}
    */
   executeWhile(predicate: (sm: this) => boolean): this {
+    const state = this.state;
     while (predicate(this)) {
       this.execute();
+    }
+    if (this.state !== state) {
+      console.log(this.state);
     }
     return this;
   }
