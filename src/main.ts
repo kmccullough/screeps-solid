@@ -1,9 +1,9 @@
 // When compiling TS to JS and bundling with rollup, the line numbers and file
 // names in error messages change. This utility uses source maps to get the line
 // numbers and file names of the original, TS source code.
-import { ErrorMapper } from 'utils/ErrorMapper';
+import { ErrorMapper } from 'util/ErrorMapper';
 
-import 'mixins/lodash';
+import 'mixin/lodash';
 
 import { CreepState } from '@src/state/creep/creep-state';
 import { creepStateTransitions, defaultCreepState } from './config/config';
@@ -12,6 +12,7 @@ import { creepStates } from './state/creep/creep-states';
 import { DependencyManager } from '@src/dependency-manager';
 import { CreepFacade } from '@src/facade/creep/creep';
 import { SpawnerFacade } from '@src/facade/spawner';
+import { StateExecutor } from '@src/state/state-executor';
 import { StateStabilizer } from '@src/state/state-stabilizer';
 import { StateMachine } from 'state/state-machine';
 
@@ -40,13 +41,12 @@ export const loop = ErrorMapper.wrapLoop(() => {
       creepStates
     );
 
-    const stateMachine = new StateMachine(
+    // Transition to different states
+    const stateMachine = new StateMachine<CreepState>(
       // Current state or undefined
       creep.getState(),
       // Transition to state mappings
-      creepStateTransitions,
-      // State implementations
-      states
+      creepStateTransitions
     );
     // Enter initial state, if needed
     if (!creep.getState()) {
@@ -55,11 +55,23 @@ export const loop = ErrorMapper.wrapLoop(() => {
       );
     }
 
+    // Executes State enter/execute/exit methods on state changes
+    const stateExecutor = new StateExecutor(
+      stateMachine,
+      // State implementations
+      states
+    );
+
+    // TODO: Might be able to skip busy creeps
     creep.setBusy(false);
 
+    // Stabilize creep state following state logic
+    // until creep busy or sent to first state again
     const startState = stateMachine.state;
     let firstRun = true;
-    const stateStabilizer = new StateStabilizer(stateMachine);
+    const stateStabilizer = new StateStabilizer(
+      stateExecutor
+    );
     stateStabilizer
       .continueWhile(() => {
         const looped = !firstRun
@@ -68,6 +80,7 @@ export const loop = ErrorMapper.wrapLoop(() => {
         return !creep.isBusy() && !looped;
       })
       .onStabilize(() => {
+        // Output creep state if changed this tick
         if (stateMachine.state !== startState) {
           console.log(stateMachine.state);
         }

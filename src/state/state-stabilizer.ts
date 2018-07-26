@@ -1,17 +1,22 @@
-import { State } from '@src/state/state';
-import { StateMachine } from '@src/state/state-machine';
+import { State, Stateful } from '@src/state/state';
+import { Executor } from '@src/util/executor';
 
 export type Predicate = (() => boolean) | undefined;
 export type OnStabilize = (() => void) | undefined;
 
-export class StateStabilizer<StateType extends State> {
+export class StateStabilizer<StateType extends State> implements Stateful, Executor {
 
   private predicate: Predicate = undefined;
   private stabilizeCb: OnStabilize = undefined;
 
   constructor(
-    public stateMachine: StateMachine<StateType>
+    public stateMachine: Executor & Stateful
   ) {
+
+  }
+
+  get state(): string {
+    return this.stateMachine.state;
   }
 
   /**

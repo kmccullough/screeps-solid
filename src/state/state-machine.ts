@@ -1,4 +1,3 @@
-import { DependencyManager } from '@src/dependency-manager';
 import { State } from '@src/state/state';
 
 export interface Transition<TransitionType = string, StateType = string> {
@@ -23,13 +22,10 @@ export class StateMachine<StateType extends State> {
    * Instantiate StateMachine
    * @param {string} [state] Initial state name
    * @param {Transition[]} transitions Mappings of transition to/from states
-   * @param {DependencyManager<State>} [states] State factories for
-   * transition enter/exit actions and state execute action
    */
   constructor(
     state: StateName,
-    transitions: Transition[],
-    public states?: DependencyManager<StateType>
+    transitions: Transition[]
   ) {
     this.state = state || StateUndefined;
     this.registerTransition(...transitions);
@@ -88,55 +84,10 @@ export class StateMachine<StateType extends State> {
   /**
    * Transition to the given state name
    * @param {string} state
-   * @param {boolean} forceTransition
    * @returns {this}
    */
-  transitionTo(state: string, forceTransition: boolean = false): this {
-    if (this.state !== state || forceTransition) {
-      if (this.states) {
-        const stateInstance = this.states.get(this.state);
-        if (stateInstance) {
-          stateInstance.exit(this);
-        }
-      }
-      this.state = state;
-      if (this.states) {
-        const stateInstance = this.states.get(this.state);
-        if (stateInstance) {
-          stateInstance.enter(this);
-        }
-      }
-    }
-    return this;
-  }
-
-  /**
-   * Execute current state, if DependencyManager present
-   * @returns {this}
-   */
-  execute(): this {
-    if (this.states) {
-      const stateInstance = this.states.get(this.state);
-      if (stateInstance) {
-        stateInstance.execute(this);
-      }
-    }
-    return this;
-  }
-
-  /**
-   * Execute states while predicate returns truthy, if DependencyManager present
-   * @param {(sm: this) => boolean} predicate Returns falsey to stop execution
-   * @returns {this}
-   */
-  executeWhile(predicate: (sm: this) => boolean): this {
-    const state = this.state;
-    while (predicate(this)) {
-      this.execute();
-    }
-    if (this.state !== state) {
-      console.log(this.state);
-    }
+  transitionTo(state: string): this {
+    this.state = state;
     return this;
   }
 

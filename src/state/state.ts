@@ -1,14 +1,15 @@
 import { StateMachine } from '@src/state/state-machine';
 
-export interface StateConstructor {
-  // Derived State must have static state property
+export interface Stateful {
   state: string;
+}
+
+export interface StateConstructor extends Stateful {
   new (): State;
 }
 
-export abstract class State {
+export abstract class State implements Stateful {
 
-  // Instance copy of state name
   state: string;
 
   constructor() {
