@@ -5,7 +5,7 @@ import { ErrorMapper } from 'util/ErrorMapper';
 
 import 'mixin/lodash';
 
-import { log } from 'util/log';
+import { logger } from 'debug/logger';
 
 import { CreepState } from '@src/state/creep/creep-state';
 import { creepStateTransitions, defaultCreepState } from './config/config';
@@ -16,11 +16,112 @@ import { CreepFacade } from '@src/facade/creep/creep';
 import { SpawnerFacade } from '@src/facade/spawner';
 import { StateExecutor } from '@src/state/state-executor';
 import { StateStabilizer } from '@src/state/state-stabilizer';
+import { MeanAverage } from '@src/util/average';
 import { StateMachine } from 'state/state-machine';
 
 export const loop = ErrorMapper.wrapLoop(() => {
-  log.log(`Current game tick is ${Game.time}`);
-  log.logAt('tick', `Current game tick is ${Game.time}`);
+
+  const creepCount = CreepFacade.findCreeps().length;
+
+  Memory.maximums = Memory.maximums || {};
+  Memory.maximums.ticks = Memory.maximums.ticks || 0;
+  ++Memory.maximums.ticks;
+  Memory.maximums.deadCreeps = Memory.maximums.deadCreeps || 0;
+  Memory.maximums.creeps
+    = Math.max(Memory.maximums.creeps || 0, creepCount);
+  Memory.maximums.energy = Memory.maximums.energy
+    || 0;
+
+  Memory.averages = Memory.averages || {};
+  Memory.averages.creeps = Memory.averages.creeps || 0;
+  Memory.averages.creeps
+    = new MeanAverage(
+      Memory.averages.creeps,
+      Memory.maximums.ticks
+    ).add(creepCount).value();
+  Memory.averages.energy = Memory.averages.energy || 0;
+  Memory.averages.energy
+    = new MeanAverage(
+    Memory.averages.energy,
+    Memory.maximums.ticks
+  ).add(Memory.maximums.energy).value();
+
+  Memory.per100 = Memory.per100 || {};
+  Memory.per100.spawns = Memory.per100.spawns || {
+    current: 0,
+    average: 0,
+    maximum: 0,
+  };
+  Memory.per100.energy = Memory.per100.energy || {
+    current: 0,
+    average: 0,
+    maximum: 0,
+  };
+  Memory.per100.tick = Memory.per100.tick
+    || Memory.maximums.ticks;
+  Memory.per100.ticks = Memory.maximums.ticks - Memory.per100.tick;
+  Memory.maximums.ticks100 = Memory.maximums.ticks100
+    || 0;
+  Memory.per100.spawns.maximum = Math.max(
+    Memory.per100.spawns.maximum,
+    Memory.per100.spawns.current
+  );
+  Memory.per100.energy.maximum = Math.max(
+    Memory.per100.energy.maximum,
+    Memory.per100.energy.current
+  );
+  if (Memory.per100.ticks >= 100) {
+    Memory.per100.tick = Memory.maximums.ticks;
+    Memory.per100.ticks = 0;
+    ++Memory.maximums.ticks100;
+    Memory.per100.spawns.average
+      = new MeanAverage(
+      Memory.per100.spawns.average,
+      Memory.maximums.ticks100
+    ).add(Memory.per100.spawns.current).value();
+    Memory.per100.spawns.current = 0;
+    Memory.per100.energy.average
+      = new MeanAverage(
+      Memory.per100.energy.average,
+      Memory.maximums.ticks100
+    ).add(Memory.per100.energy.current).value();
+    Memory.per100.energy.current = 0;
+  }
+
+  const logField = (label: string, value: any) =>
+    `<i>${label}</i>: <b>${value}</b>`;
+
+  logger
+    .logAt('summary', 'Screep SOLID')
+    .logAt('counts',
+      '<b>Creeps</b>:',
+      logField('Qty', creepCount),
+      logField('Avg', Math.floor(Memory.averages.creeps)),
+      logField('Max', Memory.maximums.creeps),
+      logField('RIP', Memory.maximums.deadCreeps),
+    )
+    .logAt('counts',
+      '<b>Spawns (per 100t)</b>:',
+      logField('Qty', Memory.per100.spawns.current),
+      logField('Avg', Math.floor(Memory.per100.spawns.average)),
+      logField('Max', Memory.per100.spawns.maximum),
+    )
+    .logAt('counts',
+      '<b>Energy</b>:',
+      logField('Qty', Memory.maximums.energy),
+      logField('Avg', Math.floor(Memory.averages.energy)),
+      logField('Max', Memory.maximums.energy),
+    )
+    .logAt('counts',
+      '<b>Energy (per 100t)</b>:',
+      logField('Qty', Memory.per100.energy.current),
+      logField('Avg', Math.floor(Memory.per100.energy.average)),
+      logField('Max', Memory.per100.energy.maximum),
+    )
+    .logAt('tick', `${Memory.maximums.ticks100}:${('0' + Memory.per100.ticks).slice(-2)}`)
+    .logAt('test', '1')
+    .logAt('test', '2')
+    .logAt('test', '3');
 
   const spawners = SpawnerFacade.findSpawners();
   // Just constantly create creeps at all spawners
@@ -37,6 +138,7 @@ export const loop = ErrorMapper.wrapLoop(() => {
     if (creep.isSpawning()) {
       return;
     }
+    creep.setSpawned();
 
     // Collection of CreepState implementations
     const states = new DependencyManager<CreepState>(
@@ -85,7 +187,7 @@ export const loop = ErrorMapper.wrapLoop(() => {
       .onStabilize(() => {
         // Output creep state if changed this tick
         if (stateMachine.state !== startState) {
-          log.logAt('creeps', stateMachine.state);
+          logger.logAt('creeps', stateMachine.state);
         }
       })
       .execute();
@@ -95,10 +197,11 @@ export const loop = ErrorMapper.wrapLoop(() => {
   // Automatically delete memory of missing creeps
   for (const name in Memory.creeps) {
     if (!(name in Game.creeps)) {
+      ++Memory.maximums.deadCreeps;
       delete Memory.creeps[name];
     }
   }
 
-  log.dump();
+  logger.dump();
 
 });

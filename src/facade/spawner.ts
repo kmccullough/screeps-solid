@@ -1,3 +1,5 @@
+import { logger } from 'debug/logger';
+
 export class SpawnerFacade {
 
   constructor(
@@ -28,27 +30,29 @@ export class SpawnerFacade {
       );
       switch (result) {
         case OK:
-          console.log('The spawning operation has been scheduled successfully.');
+          logger.log('The spawning operation has been scheduled successfully.');
+          Memory.per100.spawns.current = Memory.per100.spawns.current || 0;
+          ++Memory.per100.spawns.current;
           break;
         case ERR_NAME_EXISTS:
-          console.log('There is a creep with the same name already.');
+          logger.log('There is a creep with the same name already.');
           attemptSpawn = true;
           nameSuffix = nameSuffix ? nameSuffix + 1 : 2;
           break;
         case ERR_BUSY:
-          console.log('The spawn is already in process of spawning another creep.');
+          logger.log('The spawn is already in process of spawning another creep.');
           break;
         case ERR_NOT_ENOUGH_ENERGY:
-          //console.log('The spawn and its extensions contain not enough energy to create a creep with the given body.');
+          //logger.log('The spawn and its extensions contain not enough energy to create a creep with the given body.');
           break;
         case ERR_INVALID_ARGS:
-          console.log('Body is not properly described or name was not provided.');
+          logger.log('Body is not properly described or name was not provided.');
           break;
         case ERR_RCL_NOT_ENOUGH:
-          console.log('Your Room Controller level is insufficient to use this spawn.');
+          logger.log('Your Room Controller level is insufficient to use this spawn.');
           break;
         default:
-          console.log('Spawners said "Something bad happened."');
+          logger.log('Spawners said "Something bad happened."');
       }
     }
   }

@@ -1,3 +1,5 @@
+import { logger } from 'debug/logger';
+
 import { StorerFacade } from '@src/facade/creep/storer';
 import { State } from '@src/state/state';
 import { StateMachine } from '../state-machine';
@@ -19,7 +21,7 @@ export class Storing extends CreepState {
 
     const spawner = creep.findSpawner();
     if (!spawner) {
-      console.log('no spawner?');
+      logger.log('no spawner?');
       return stateMachine.next();
     }
 

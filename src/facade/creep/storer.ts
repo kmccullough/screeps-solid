@@ -1,3 +1,5 @@
+import { logger } from 'debug/logger';
+
 import { CreepFacade } from './creep';
 
 export class StorerFacade extends CreepFacade {
@@ -12,20 +14,23 @@ export class StorerFacade extends CreepFacade {
     const result = this.creep.transfer(spawner, RESOURCE_ENERGY);
     switch (result) {
       case OK:
-        //console.log('The transfer operation has been scheduled successfully.');
+        const energy = this.creep.carry[RESOURCE_ENERGY];
+        Memory.per100.energy.current += energy;
+        Memory.maximums.energy += energy;
+        //logger.log('The transfer operation has been scheduled successfully.');
         this.setBusy(true);
         break;
       case ERR_INVALID_TARGET:
-        console.log('The target is not a valid object which can contain the specified resource.');
+        logger.log('The target is not a valid object which can contain the specified resource.');
         break;
       case ERR_FULL:
-        console.log('The target cannot receive any more resources.');
+        logger.log('The target cannot receive any more resources.');
         break;
       case ERR_NOT_IN_RANGE:
-        console.log('The target is too far away.');
+        logger.log('The target is too far away.');
         break;
       default:
-        console.log('Creep said "Something bad happened."');
+        logger.log('Creep said "Something bad happened."');
     }
   }
 

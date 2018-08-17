@@ -1,3 +1,5 @@
+import { logger } from 'debug/logger';
+
 import { RoomFacade, RoomPositionObject } from '@src/facade/room';
 
 export class CreepFacade {
@@ -19,6 +21,13 @@ export class CreepFacade {
     return this.creep.spawning;
   }
 
+  setSpawned(): this {
+    if (!this.creep.memory.spawned) {
+      this.creep.memory.spawned = true;
+    }
+    return this;
+  }
+
   isEnergyEmpty() {
     return !this.creep.carry[RESOURCE_ENERGY];
   }
@@ -35,24 +44,24 @@ export class CreepFacade {
     const result = this.creep.moveTo(target);
     switch (result) {
       case OK:
-        //console.log('The movement operation has been scheduled successfully.');
+        //logger.log('The movement operation has been scheduled successfully.');
         this.setBusy(true);
         break;
       case ERR_NO_PATH:
-        console.log('No path to the target could be found.');
+        logger.log('No path to the target could be found.');
         break;
       case ERR_INVALID_TARGET:
-        console.log('The target provided is invalid.');
+        logger.log('The target provided is invalid.');
         break;
       case ERR_TIRED:
-        //console.log('The fatigue indicator of the creep is non-zero.');
+        //logger.log('The fatigue indicator of the creep is non-zero.');
         break;
       case ERR_NO_BODYPART:
         // Note, this can get knocked off by an attack
-        console.log('There are no MOVE body parts in this creep’s body.');
+        logger.log('There are no MOVE body parts in this creep’s body.');
         break;
       default:
-        console.log('Creep said "Something bad happened."');
+        logger.log('Creep said "Something bad happened."');
     }
   }
 
@@ -73,4 +82,5 @@ export class CreepFacade {
     this.creep.memory.isBusy = isBusy;
     return this;
   }
+
 }
