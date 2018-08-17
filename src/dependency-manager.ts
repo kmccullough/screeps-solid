@@ -9,8 +9,8 @@ export class DependencyManager<Dependency, DependencyConstructor = any> {
   private instances: { [key: string]: Dependency } = {};
 
   constructor(
-    public factory?: DependencyManagerFactory<Dependency, DependencyConstructor>,
-    public dependencies: { [key: string]: Dependency | DependencyConstructor } = {}
+    private factory?: DependencyManagerFactory<Dependency, DependencyConstructor>,
+    private dependencies: { [key: string]: Dependency | DependencyConstructor } = {}
   ) {
 
   }

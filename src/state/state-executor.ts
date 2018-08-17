@@ -12,8 +12,8 @@ export class StateExecutor<StateType extends State> implements Stateful, Executo
    * transition enter/exit actions and state execute action
    */
   constructor(
-    public stateMachine: StateMachine<StateType>,
-    public states: DependencyManager<StateType>
+    private stateMachine: StateMachine<StateType>,
+    private states: DependencyManager<StateType>
   ) {
 
   }

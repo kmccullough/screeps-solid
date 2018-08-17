@@ -12,7 +12,7 @@ export const StateUndefined = 'undefined';
 
 export class StateMachine<StateType extends State> {
 
-  public state: string;
+  private _state: string = StateUndefined;
   private transitions: { [key: string]: { name: string, from: { [key: string]: string } } } = {};
 
   // Dynamic transition methods
@@ -27,8 +27,12 @@ export class StateMachine<StateType extends State> {
     state: StateName,
     transitions: Transition[]
   ) {
-    this.state = state || StateUndefined;
+    this.transitionTo(state || StateUndefined);
     this.registerTransition(...transitions);
+  }
+
+  get state(): string {
+    return this._state;
   }
 
   /**
@@ -63,8 +67,12 @@ export class StateMachine<StateType extends State> {
    * @returns {string} State expected after transition
    */
   stateFromTransition(transition: string, currentState?: string): string | null {
+    let expectedState;
     const t = this.transitions[transition || 'any'];
-    const expectedState = t.from[currentState || this.state] || t.from.any;
+    if (t) {
+      expectedState = t.from[currentState || this.state]
+        || t.from.any;
+    }
     return expectedState || null;
   }
 
@@ -87,7 +95,7 @@ export class StateMachine<StateType extends State> {
    * @returns {this}
    */
   transitionTo(state: string): this {
-    this.state = state;
+    this._state = state;
     return this;
   }
 
