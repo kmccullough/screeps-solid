@@ -13,6 +13,7 @@
     "no-empty": false,
     "no-namespace": [true, "allow-declarations"],
     "no-string-literal": false,
+    "object-literal-sort-keys": false,
     "quotemark": [true, "single", "avoid-escape"],
     "trailing-comma": [true, {
       "multiline": {

@@ -5,6 +5,8 @@ import { ErrorMapper } from 'util/ErrorMapper';
 
 import 'mixin/lodash';
 
+import { log } from 'util/log';
+
 import { CreepState } from '@src/state/creep/creep-state';
 import { creepStateTransitions, defaultCreepState } from './config/config';
 import { creepStates } from './state/creep/creep-states';
@@ -17,7 +19,8 @@ import { StateStabilizer } from '@src/state/state-stabilizer';
 import { StateMachine } from 'state/state-machine';
 
 export const loop = ErrorMapper.wrapLoop(() => {
-  console.log(`Current game tick is ${Game.time}`);
+  log.log(`Current game tick is ${Game.time}`);
+  log.logAt('tick', `Current game tick is ${Game.time}`);
 
   const spawners = SpawnerFacade.findSpawners();
   // Just constantly create creeps at all spawners
@@ -82,7 +85,7 @@ export const loop = ErrorMapper.wrapLoop(() => {
       .onStabilize(() => {
         // Output creep state if changed this tick
         if (stateMachine.state !== startState) {
-          console.log(stateMachine.state);
+          log.logAt('creeps', stateMachine.state);
         }
       })
       .execute();
@@ -95,4 +98,7 @@ export const loop = ErrorMapper.wrapLoop(() => {
       delete Memory.creeps[name];
     }
   }
+
+  log.dump();
+
 });
